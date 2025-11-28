@@ -1,0 +1,389 @@
+/*****************************************************************************************************************
+    UNIVERSIDAD NACIONAL AUTONOMA DE MEXICO
+    FACULTAD DE ESTUDIOS SUPERIORES -ARAGON-
+
+    Computadoras y programacion.
+    Dereck Gael Gonzalez Flores        426121396
+
+    Quiso decir: Programa principal de la aplicacion de la distancia de Levenstein.
+
+******************************************************************************************************************/
+
+#include <stdio.h>
+#include "stdafx.h"
+#include <string.h>
+#include "corrector.h"
+#include <ctype.h>
+#include <stdlib.h>
+
+#define TAMTOKEN 50
+#define MAXPALABRAS 80000
+
+//Funciones publicas del proyecto
+/*****************************************************************************************************************
+    DICCIONARIO: Esta funcion crea el diccionario completo
+    char *	szNombre				:	Nombre del archivo de donde se sacaran las palabras del diccionario
+    char	szPalabras[][TAMTOKEN]	:	Arreglo con las palabras completas del diccionario
+    int		iEstadisticas[]			:	Arreglo con el numero de veces que aparecen las palabras en el diccionario
+    int &	iNumElementos			:	Numero de elementos en el diccionario
+******************************************************************************************************************/
+
+// =======================================================
+// alfabeto  (32 bytes)
+// =======================================================
+const char alfabeto[32] = 
+{
+    'a','b','c','d','e','f','g','h','i','j','k','l','m','n',
+    (char)0xF1,          // ñ
+    'o','p','q','r','s','t','u','v','w','x','y','z',
+    (char)0xE1,          // á
+    (char)0xE9,          // é
+    (char)0xED,          // í
+    (char)0xF3,          // ó
+    (char)0xFA           // ú
+};
+const int TAM_ALFABETO = 32;
+
+// =======================================================
+// Funcion para pasar las palabras a minusculas
+// =======================================================
+static void convMinus(char* t) 
+{
+    int k = 0;
+    while (t[k]) 
+    {
+        t[k] = (char)tolower((unsigned char)t[k]);   // convierto letra por letra a minúscula
+        k++;                                        
+    }
+}
+
+// =======================================================
+// Funcion para delimitar que signos separan las palabras
+// =======================================================
+static int delim(char c) 
+{
+    switch (c) 
+    {
+      case ' ':                                   // espacio
+      case '\n':                                  // salto de línea 
+      case '\t':                                  // tab
+      case '\r':                                  // retorno de carro
+      case ',':                                   // coma
+      case '.':                                   // punto
+      case ';':                                   // punto y coma
+      case '(':
+      case ')':                                   // paréntesis
+        return 1;                               // es delimitador
+    }
+    return 0;                                       // no es delimitador
+}
+
+// =======================================================
+// Funcion para quitar la puntuación
+// =======================================================
+static void limpiaFinal(char* x) 
+{
+    int L = strlen(x);
+    while (L > 0) 
+    {                                  
+        char c = x[L - 1];                                              
+        if (c == ',' || c == '.' || c == ';' || c == '(' || c == ')')
+            x[--L] = '\0';                           
+        else
+            break;                                   
+    }
+}
+
+// =======================================================
+// Funcion para la búsqueda binaria
+// =======================================================
+static int buscarPal(const char base[][TAMTOKEN], int cant, const char* pal)
+{
+    int a = 0, b = cant - 1;
+    while (a <= b) 
+    {
+        int m = (a + b) / 2;                         
+        int r = strcmp(base[m], pal);               // comparo con la palabra buscada
+
+        if (r == 0) 
+            return m;                        // si coincide, regreso su posición
+        if (r < 0)  
+            a = m + 1;                        
+        else        
+            b = m - 1;                       
+    }
+    return -1;                                       
+}
+
+// =======================================================
+// Funcion para ordenar e insertar en el diccionario    
+// =======================================================
+static void inserta
+(
+    char base[][TAMTOKEN],
+    int freq[],
+    int* cant,
+    const char* pal)
+{
+    int pos = 0;
+    while (pos < *cant && strcmp(base[pos], pal) < 0)
+        pos++;                                       // busco a dónde debería ir la palabra
+
+    for (int i = *cant; i > pos; i--)
+    {              
+        strcpy(base[i], base[i - 1]);                  // muevo las palabra
+        freq[i] = freq[i - 1];                         // muevo su frecuencia
+    }
+
+    strcpy(base[pos], pal);                          // inserto una nueva palabra
+    freq[pos] = 1;                                   // la frecuencia inicia en 1
+    (*cant)++;                                       // aumento total de palabras
+}
+
+/*****************************************************************************************************************
+    FUNCION PRINCIPAL de DICCIONARIO: Esta funcion crea el diccionario completo
+    char *	szNombre				:	Nombre del archivo de donde se sacaran las palabras del diccionario
+    char	szPalabras[][TAMTOKEN]	:	Arreglo con las palabras completas del diccionario
+    int		iEstadisticas[]			:	Arreglo con el numero de veces que aparecen las palabras en el diccionario
+    int &	iNumElementos			:	Numero de elementos en el diccionario
+******************************************************************************************************************/
+
+void Diccionario(char* szNombre, char szPalabras[][TAMTOKEN], int iEstadisticas[], int& iNumElementos)
+{
+    iNumElementos = 0;                               
+
+    FILE* fp = fopen(szNombre, "r");                 // abro el archivo 
+    if (!fp)
+        return;                                 
+
+    char token[TAMTOKEN];
+    int p = 0, ch;
+
+    while ((ch = fgetc(fp)) != EOF)                     // se lee el archivo letra por letra
+    {                
+
+        if (delim((char)ch))          // si la letra es separador
+        {                       
+
+            if (p > 0) 
+            {                             
+                token[p] = '\0';                      
+                limpiaFinal(token);                     // quito la puntuación final
+                convMinus(token);                    // lo paso a minúsculas
+
+                if (token[0] != '\0') 
+                {             
+                    int idx = buscarPal(szPalabras, iNumElementos, token);
+                    if (idx >= 0)
+                        iEstadisticas[idx]++;                         // si ya existe le sumo
+                    else 
+                        if (iNumElementos < MAXPALABRAS)
+                            inserta(szPalabras, iEstadisticas, &iNumElementos, token);
+                }
+                p = 0;                               
+            }
+
+        }
+        else
+        {
+            if (p < TAMTOKEN - 1)
+                token[p++] = (char)ch;               // voy agregando la letra al token
+        }
+    }
+
+    if (p > 0) 
+    {                                     
+        token[p] = '\0';
+        limpiaFinal(token);
+        convMinus(token);
+
+        if (token[0] != '\0')
+        {
+            int idx = buscarPal(szPalabras, iNumElementos, token);
+            if (idx >= 0)
+                iEstadisticas[idx]++;
+            else 
+                if (iNumElementos < MAXPALABRAS)
+                inserta(szPalabras, iEstadisticas, &iNumElementos, token);
+        }
+    }
+
+    fclose(fp);                                     
+}
+  
+/*****************************************************************************************************************
+    ClonaPalabras: toma una palabra y obtiene todas las combinaciones y permutaciones requeridas por el metodo
+    char *	szPalabraLeida,						// Palabra a clonar
+    char	szPalabrasSugeridas[][TAMTOKEN], 	//Lista de palabras clonadas
+    int &	iNumSugeridas)						//Numero de elementos en la lista
+
+    Genera variaciones de una palabra por:
+   1) Eliminación (quitar cada carácter)
+   2) Transposición (intercambiar pares contiguos)
+   3) Sustitución (reemplazar cada posición por cada letra del alfabeto)
+   4) Inserción (insertar cada letra del alfabeto en cada posición)
+******************************************************************************************************************/
+
+// Funcion Principal de ClonaPalabras//
+
+void	ClonaPalabras
+(
+    char* szPalabraLeida,						// Palabra a clonar
+    char	szPalabrasSugeridas[][TAMTOKEN], 	//Lista de palabras clonadas
+	int& iNumSugeridas                          //Numero de elementos en la lista
+)	
+{
+    iNumSugeridas = 0;                               
+	int L = strlen(szPalabraLeida);                  // obtengo la longitud de la palabra
+
+	strcpy(szPalabrasSugeridas[iNumSugeridas++], szPalabraLeida);  // guardo la palabra original
+
+    // Eliminacion
+    for (int i = 0; i < L; i++) 
+    {
+        char alt[TAMTOKEN];
+        int u = 0;
+
+        for (int j = 0; j < L; j++)
+            if (j != i)
+                alt[u++] = szPalabraLeida[j];        
+
+        alt[u] = '\0';
+
+        if (alt[0] != '\0')
+            strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+    }
+
+    // Transposicion
+    for (int i = 0; i + 1 < L; i++)
+    {
+        char alt[TAMTOKEN];
+        strcpy(alt, szPalabraLeida);
+
+        char tmp = alt[i];                           
+        alt[i] = alt[i + 1];
+        alt[i + 1] = tmp;
+
+        strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+    }
+
+	// Sustitución
+    for (int pos = 0; pos < L; pos++) 
+    {
+        for (int a = 0; a < TAM_ALFABETO; a++)
+        {
+            char alt[TAMTOKEN];
+            strcpy(alt, szPalabraLeida);
+            alt[pos] = alfabeto[a];                   
+            strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+        }
+    }
+
+	// Insercion
+    for (int pos = 0; pos <= L; pos++) 
+    {
+        for (int a = 0; a < TAM_ALFABETO; a++)
+        {
+
+            char alt[TAMTOKEN];
+            int u = 0;
+
+            for (int i = 0; i < pos; i++)
+                alt[u++] = szPalabraLeida[i];        
+
+            alt[u++] = alfabeto[a];                 
+
+            for (int i = pos; i < L; i++)
+                alt[u++] = szPalabraLeida[i];        
+
+            alt[u] = '\0';
+            strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+        }
+    }
+
+    // Ordenamiento
+    for (int i = 0; i < iNumSugeridas - 1; i++)
+    {
+        for (int j = 0; j < iNumSugeridas - i - 1; j++) 
+        {
+            if (strcmp(szPalabrasSugeridas[j], szPalabrasSugeridas[j + 1]) > 0)
+            {
+                char t[TAMTOKEN];
+                strcpy(t, szPalabrasSugeridas[j]);                                    
+                strcpy(szPalabrasSugeridas[j], szPalabrasSugeridas[j + 1]);
+                strcpy(szPalabrasSugeridas[j + 1], t);
+            }
+        }
+    }
+}
+
+/*****************************************************************************************************************
+    ListaCandidatas: Esta funcion recupera desde el diccionario las palabras validas y su peso
+    Regresa las palabras ordenadas por su peso
+    char	szPalabrasSugeridas[][TAMTOKEN],	//Lista de palabras clonadas
+    int		iNumSugeridas,						//Lista de palabras clonadas
+    char	szPalabras[][TAMTOKEN],				//Lista de palabras del diccionario
+    int		iEstadisticas[],					//Lista de las frecuencias de las palabras
+    int		iNumElementos,						//Numero de elementos en el diccionario
+    char	szListaFinal[][TAMTOKEN],			//Lista final de palabras a sugerir
+    int		iPeso[],							//Peso de las palabras en la lista final
+    int &	iNumLista)							//Numero de elementos en la szListaFinal
+
+    Busca cada palabra sugerida en el diccionario (bsearch), añade a la lista final solo si existe en el diccionario y no está ya añadida, guarda su peso (frecuencia).
+    Luego ordena por peso descendente; empate resuelto con strcmp (ASCII).
+ /******************************************************************************************************************/
+
+void ListaCandidatas(char szPalabrasSugeridas[][TAMTOKEN],
+    int iNumSugeridas,
+    char szPalabras[][TAMTOKEN],
+    int iEstadisticas[],
+    int iNumElementos,
+    char szListaFinal[][TAMTOKEN],
+    int iPeso[],
+    int& iNumLista)
+{
+    iNumLista = 0;                                   
+
+    for (int p = 0; p < iNumSugeridas; p++) 
+    {
+
+        int pos = buscarPal(szPalabras, iNumElementos, szPalabrasSugeridas[p]);
+        // busco si la sugerencia existe
+
+        if (pos >= 0)
+        {
+
+            int ya = 0;
+            for (int r = 0; r < iNumLista; r++) 
+            {
+                if (!strcmp(szListaFinal[r], szPalabras[pos]))
+                    ya = 1;                                               // pongo una bandera para ver que no se repita
+            }
+
+            if (!ya) {
+                strcpy(szListaFinal[iNumLista], szPalabras[pos]);       // agrego la  palabra
+                iPeso[iNumLista] = iEstadisticas[pos];             
+                iNumLista++;                                       
+            }
+        }
+    }
+
+	// Se ordena por peso descendente
+    for (int i = 0; i < iNumLista - 1; i++)
+    {
+        for (int j = 0; j < iNumLista - i - 1; j++) 
+        {
+            if (iPeso[j] < iPeso[j + 1]) {
+
+                int t = iPeso[j];                  
+                iPeso[j] = iPeso[j + 1];
+                iPeso[j + 1] = t;
+
+                char aux[TAMTOKEN];               
+                strcpy(aux, szListaFinal[j]);
+                strcpy(szListaFinal[j], szListaFinal[j + 1]);
+                strcpy(szListaFinal[j + 1], aux);
+            }
+        }
+    }
+}
