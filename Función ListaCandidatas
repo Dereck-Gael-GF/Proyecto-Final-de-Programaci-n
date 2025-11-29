@@ -1,0 +1,69 @@
+/*****************************************************************************************************************
+    ListaCandidatas: Esta funcion recupera desde el diccionario las palabras validas y su peso
+    Regresa las palabras ordenadas por su peso
+    char	szPalabrasSugeridas[][TAMTOKEN],	//Lista de palabras clonadas
+    int		iNumSugeridas,						//Lista de palabras clonadas
+    char	szPalabras[][TAMTOKEN],				//Lista de palabras del diccionario
+    int		iEstadisticas[],					//Lista de las frecuencias de las palabras
+    int		iNumElementos,						//Numero de elementos en el diccionario
+    char	szListaFinal[][TAMTOKEN],			//Lista final de palabras a sugerir
+    int		iPeso[],							//Peso de las palabras en la lista final
+    int &	iNumLista)							//Numero de elementos en la szListaFinal
+
+    Busca cada palabra sugerida en el diccionario (bsearch), añade a la lista final solo si existe en el diccionario y no está ya añadida, guarda su peso (frecuencia).
+    Luego ordena por peso descendente; empate resuelto con strcmp (ASCII).
+ /******************************************************************************************************************/
+
+void ListaCandidatas(char szPalabrasSugeridas[][TAMTOKEN],
+    int iNumSugeridas,
+    char szPalabras[][TAMTOKEN],
+    int iEstadisticas[],
+    int iNumElementos,
+    char szListaFinal[][TAMTOKEN],
+    int iPeso[],
+    int& iNumLista)
+{
+    iNumLista = 0;                                   
+
+    for (int p = 0; p < iNumSugeridas; p++) 
+    {
+
+        int pos = buscarPal(szPalabras, iNumElementos, szPalabrasSugeridas[p]);
+        // busco si la sugerencia existe
+
+        if (pos >= 0)
+            int ya = 0;
+            for (int r = 0; r < iNumLista; r++) 
+            {
+                if (!strcmp(szListaFinal[r], szPalabras[pos]))
+                    ya = 1;                                               // pongo una bandera para ver que no se repita
+            }
+
+            if (!ya) {
+                strcpy(szListaFinal[iNumLista], szPalabras[pos]);       // agrego la  palabra
+                iPeso[iNumLista] = iEstadisticas[pos];             
+                iNumLista++;                                       
+            }
+        }
+    }
+
+	// Se ordena por peso descendente
+    for (int i = 0; i < iNumLista - 1; i++)
+    {
+        for (int j = 0; j < iNumLista - i - 1; j++) 
+        {
+            if (iPeso[j] < iPeso[j + 1]) {
+
+                int t = iPeso[j];                  
+                iPeso[j] = iPeso[j + 1];
+                iPeso[j + 1] = t;
+
+                char aux[TAMTOKEN];               
+                strcpy(aux, szListaFinal[j]);
+                strcpy(szListaFinal[j], szListaFinal[j + 1]);
+                strcpy(szListaFinal[j + 1], aux);
+            }
+        }
+    }
+}
+        {
