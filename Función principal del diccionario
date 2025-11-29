@@ -1,0 +1,69 @@
+/*****************************************************************************************************************
+    FUNCION PRINCIPAL de DICCIONARIO: Esta funcion crea el diccionario completo
+    char *	szNombre				:	Nombre del archivo de donde se sacaran las palabras del diccionario
+    char	szPalabras[][TAMTOKEN]	:	Arreglo con las palabras completas del diccionario
+    int		iEstadisticas[]			:	Arreglo con el numero de veces que aparecen las palabras en el diccionario
+    int &	iNumElementos			:	Numero de elementos en el diccionario
+******************************************************************************************************************/
+void Diccionario(char* szNombre, char szPalabras[][TAMTOKEN], int iEstadisticas[], int& iNumElementos)
+{
+    iNumElementos = 0;                               
+
+    FILE* fp = fopen(szNombre, "r");                 // abro el archivo 
+    if (!fp)
+        return;                                 
+
+    char token[TAMTOKEN];
+    int p = 0, ch;
+
+    while ((ch = fgetc(fp)) != EOF)                     // se lee el archivo letra por letra
+    {                
+
+        if (delim((char)ch))          // si la letra es separador
+        {                       
+
+            if (p > 0) 
+            {                             
+                token[p] = '\0';                      
+                limpiaFinal(token);                     // quito la puntuación final
+                convMinus(token);                    // lo paso a minúsculas
+
+                if (token[0] != '\0') 
+                {             
+                    int idx = buscarPal(szPalabras, iNumElementos, token);
+                    if (idx >= 0)
+                        iEstadisticas[idx]++;                         // si ya existe le sumo
+                    else 
+                        if (iNumElementos < MAXPALABRAS)
+                            inserta(szPalabras, iEstadisticas, &iNumElementos, token);
+                }
+                p = 0;                               
+            }
+
+        }
+        else
+        {
+            if (p < TAMTOKEN - 1)
+                token[p++] = (char)ch;               // voy agregando la letra al token
+        }
+    }
+
+    if (p > 0) 
+    {                                     
+        token[p] = '\0';
+        limpiaFinal(token);
+        convMinus(token);
+
+        if (token[0] != '\0')
+        {
+            int idx = buscarPal(szPalabras, iNumElementos, token);
+            if (idx >= 0)
+                iEstadisticas[idx]++;
+            else 
+                if (iNumElementos < MAXPALABRAS)
+                inserta(szPalabras, iEstadisticas, &iNumElementos, token);
+        }
+    }
+
+    fclose(fp);                                     
+}
