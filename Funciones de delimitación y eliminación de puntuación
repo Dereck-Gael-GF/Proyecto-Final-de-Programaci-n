@@ -1,0 +1,36 @@
+// =======================================================
+// Funcion para delimitar que signos separan las palabras
+// =======================================================
+static int delim(char c) 
+{
+    switch (c) 
+    {
+      case ' ':                                   // espacio
+      case '\n':                                  // salto de línea 
+      case '\t':                                  // tab
+      case '\r':                                  // retorno de carro
+      case ',':                                   // coma
+      case '.':                                   // punto
+      case ';':                                   // punto y coma
+      case '(':
+      case ')':                                   // paréntesis
+        return 1;                               // es delimitador
+    }
+    return 0;                                       // no es delimitador
+}
+
+// =======================================================
+// Funcion para quitar la puntuación
+// =======================================================
+static void limpiaFinal(char* x) 
+{
+    int L = strlen(x);
+    while (L > 0) 
+    {                                  
+        char c = x[L - 1];                                              
+        if (c == ',' || c == '.' || c == ';' || c == '(' || c == ')')
+            x[--L] = '\0';                           
+        else
+            break;                                   
+    }
+}
