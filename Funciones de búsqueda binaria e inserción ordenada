@@ -1,0 +1,45 @@
+// =======================================================
+// Funcion para la búsqueda binaria
+// =======================================================
+static int buscarPal(const char base[][TAMTOKEN], int cant, const char* pal)
+{
+    int a = 0, b = cant - 1;
+    while (a <= b) 
+    {
+        int m = (a + b) / 2;                         
+        int r = strcmp(base[m], pal);               // comparo con la palabra buscada
+
+        if (r == 0) 
+            return m;                        // si coincide, regreso su posición
+        if (r < 0)  
+            a = m + 1;                        
+        else        
+            b = m - 1;                       
+    }
+    return -1;                                       
+}
+
+// =======================================================
+// Funcion para ordenar e insertar en el diccionario    
+// =======================================================
+static void inserta
+(
+    char base[][TAMTOKEN],
+    int freq[],
+    int* cant,
+    const char* pal)
+{
+    int pos = 0;
+    while (pos < *cant && strcmp(base[pos], pal) < 0)
+        pos++;                                       // busco a dónde debería ir la palabra
+
+    for (int i = *cant; i > pos; i--)
+    {              
+        strcpy(base[i], base[i - 1]);                  // muevo las palabra
+        freq[i] = freq[i - 1];                         // muevo su frecuencia
+    }
+
+    strcpy(base[pos], pal);                          // inserto una nueva palabra
+    freq[pos] = 1;                                   // la frecuencia inicia en 1
+    (*cant)++;                                       // aumento total de palabras
+}
