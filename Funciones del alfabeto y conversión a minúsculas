@@ -1,0 +1,28 @@
+// =======================================================
+// alfabeto  (32 bytes)
+// =======================================================
+const char alfabeto[32] = 
+{
+    'a','b','c','d','e','f','g','h','i','j','k','l','m','n',
+    (char)0xF1,          // ñ
+    'o','p','q','r','s','t','u','v','w','x','y','z',
+    (char)0xE1,          // á
+    (char)0xE9,          // é
+    (char)0xED,          // í
+    (char)0xF3,          // ó
+    (char)0xFA           // ú
+};
+const int TAM_ALFABETO = 32;
+
+// =======================================================
+// Funcion para pasar las palabras a minusculas
+// =======================================================
+static void convMinus(char* t) 
+{
+    int k = 0;
+    while (t[k]) 
+    {
+        t[k] = (char)tolower((unsigned char)t[k]);   // convierto letra por letra a minúscula
+        k++;                                        
+    }
+}
