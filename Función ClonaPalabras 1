@@ -1,0 +1,66 @@
+/*****************************************************************************************************************
+    ClonaPalabras: toma una palabra y obtiene todas las combinaciones y permutaciones requeridas por el metodo
+    char *	szPalabraLeida,						// Palabra a clonar
+    char	szPalabrasSugeridas[][TAMTOKEN], 	//Lista de palabras clonadas
+    int &	iNumSugeridas)						//Numero de elementos en la lista
+
+    Genera variaciones de una palabra por:
+   1) Eliminación (quitar cada carácter)
+   2) Transposición (intercambiar pares contiguos)
+   3) Sustitución (reemplazar cada posición por cada letra del alfabeto)
+   4) Inserción (insertar cada letra del alfabeto en cada posición)
+******************************************************************************************************************/
+
+// Funcion Principal de ClonaPalabras//
+
+void	ClonaPalabras
+(
+    char* szPalabraLeida,						// Palabra a clonar
+    char	szPalabrasSugeridas[][TAMTOKEN], 	//Lista de palabras clonadas
+	int& iNumSugeridas                          //Numero de elementos en la lista
+)	
+{
+    iNumSugeridas = 0;                               
+	int L = strlen(szPalabraLeida);                  // obtengo la longitud de la palabra
+
+	strcpy(szPalabrasSugeridas[iNumSugeridas++], szPalabraLeida);  // guardo la palabra original
+
+    // Eliminacion
+    for (int i = 0; i < L; i++) 
+    {
+        char alt[TAMTOKEN];
+    for (int j = 0; j < L; j++)
+        if (j != i)
+            alt[u++] = szPalabraLeida[j];        
+
+    alt[u] = '\0';
+
+    if (alt[0] != '\0')
+        strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+}
+
+// Transposicion
+for (int i = 0; i + 1 < L; i++)
+{
+    char alt[TAMTOKEN];
+    strcpy(alt, szPalabraLeida);
+
+    char tmp = alt[i];                           
+    alt[i] = alt[i + 1];
+    alt[i + 1] = tmp;
+
+    strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+}
+
+// Sustitución
+for (int pos = 0; pos < L; pos++) 
+{
+    for (int a = 0; a < TAM_ALFABETO; a++)
+    {
+        char alt[TAMTOKEN];
+        strcpy(alt, szPalabraLeida);
+        alt[pos] = alfabeto[a];                   
+        strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+    }
+}
+        int u = 0;
