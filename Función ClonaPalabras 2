@@ -1,0 +1,37 @@
+	// Insercion
+    for (int pos = 0; pos <= L; pos++) 
+    {
+        for (int a = 0; a < TAM_ALFABETO; a++)
+        {
+
+            char alt[TAMTOKEN];
+            int u = 0;
+
+            for (int i = 0; i < pos; i++)
+                alt[u++] = szPalabraLeida[i];        
+
+            alt[u++] = alfabeto[a];                 
+
+            for (int i = pos; i < L; i++)
+                alt[u++] = szPalabraLeida[i];        
+
+            alt[u] = '\0';
+            strcpy(szPalabrasSugeridas[iNumSugeridas++], alt);
+        }
+    }
+
+    // Ordenamiento
+    for (int i = 0; i < iNumSugeridas - 1; i++)
+    {
+        for (int j = 0; j < iNumSugeridas - i - 1; j++) 
+        {
+            if (strcmp(szPalabrasSugeridas[j], szPalabrasSugeridas[j + 1]) > 0)
+            {
+                char t[TAMTOKEN];
+                strcpy(t, szPalabrasSugeridas[j]);                                    
+                strcpy(szPalabrasSugeridas[j], szPalabrasSugeridas[j + 1]);
+                strcpy(szPalabrasSugeridas[j + 1], t);
+            }
+        }
+    }
+}
